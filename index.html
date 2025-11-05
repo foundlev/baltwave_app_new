@@ -963,7 +963,7 @@
             <div class="app-header compact">
                 <span class="app-brand">Карта Волна Балтики</span>
                 <span class="sep">·</span>
-                <span class="app-ver">v1.0.0</span>
+                <span class="app-ver">v1.0.1</span>
             </div>
 
             <div class="card-selector">
@@ -1034,7 +1034,7 @@
                            id="customAmount"
                            inputmode="numeric"
                            pattern="\d*"
-                           placeholder="Введите сумму от 50 до 5000 ₽"
+                           placeholder="50-5000"
                            min="50"
                            max="5000"
                            step="50"
@@ -1142,6 +1142,20 @@
             let isProcessingPayment = false;
             let cardToDelete = null;
 
+            function resolveSelectedCardId() {
+                // источник №1 — оперативная память
+                if (currentCardNumber && cardsInfo[currentCardNumber]?.cardId) {
+                    return cardsInfo[currentCardNumber].cardId;
+                }
+                // источник №2 — localStorage (на случай свежего перезахода)
+                try {
+                    const store = JSON.parse(localStorage.getItem('transportCards') || '{}');
+                    const num = currentCardNumber || localStorage.getItem('currentCard');
+                    if (num && store[num]?.cardId) return store[num].cardId;
+                } catch (_) {}
+                return null;
+            }
+
             // Инициализация
             function init() {
                 loadCards();
@@ -1153,12 +1167,27 @@
 
                 // Загружаем данные для выбранной карты
                 const savedCard = getCurrentCard();
+                let cardToUse = null;
+
                 if (savedCard && cardsInfo[savedCard]) {
-                    selectCard(savedCard);
+                    cardToUse = savedCard;
                 } else if (Object.keys(cardsInfo).length > 0) {
-                    // Выбираем первую карту по умолчанию
-                    const firstCard = Object.keys(cardsInfo)[0];
-                    selectCard(firstCard);
+                    cardToUse = Object.keys(cardsInfo)[0];
+                }
+
+                if (cardToUse) {
+                    selectCard(cardToUse);
+
+                    const cardData = cardsInfo[cardToUse];
+                    const lastUpdate = cardData?.lastUpdateTime || cardData?.lastFetchedAt || 0;
+                    const sixHours = 6 * 60 * 60 * 1000;
+
+                    if (!lastUpdate || Date.now() - lastUpdate > sixHours) {
+                        console.log('Данные старше 6 часов — обновляю автоматически...');
+                        refreshBalance(true);
+                    } else {
+                        console.log('Данные свежие — автообновление не требуется');
+                    }
                 }
 
                 // Добавляем обработчик для кнопки обновления баланса
@@ -1777,35 +1806,63 @@
                 }
             }
 
+            // === Получение ссылки на оплату (реальный запрос) ===
             async function processPayment() {
-                if (isProcessingPayment) return;
-
                 const amount = selectedAmount || document.getElementById('customAmount').value * 100;
-                if (!amount || amount < 5000 || amount > 500000) {
-                    alert('Сумма должна быть от 50 до 5000 рублей!');
+
+                // Проверка суммы
+                if (!amount || amount < 5000 || amount > 500000 || (amount % 100) !== 0) {
+                    alert('Сумма должна быть целым числом от 50 до 5000 ₽');
                     return;
                 }
 
-                isProcessingPayment = true;
+                const cardId = resolveSelectedCardId();
+                if (!cardId) {
+                    alert('Не найден ID карты. Выбери карту и обнови баланс.');
+                    return;
+                }
+
                 const confirmBtn = document.getElementById('confirmBtn');
                 confirmBtn.classList.add('processing');
                 confirmBtn.innerHTML = 'Получение ссылки...';
 
-                // Имитируем задержку получения ссылки
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                try {
+                    const resp = await fetch('https://beneficiary-kd-api.icom24.ru/api/order/prepare/balance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Sec-Fetch-Site': 'cross-site',
+                            'Accept-Language': 'ru',
+                            'Sec-Fetch-Mode': 'cors',
+                            'Origin': 'https://oplata.volna39.ru',
+                            'Referer': 'https://oplata.volna39.ru/',
+                            'User-Agent': navigator.userAgent
+                        },
+                        body: JSON.stringify({
+                            cardId: cardId,
+                            amountCent: amount
+                        })
+                    });
 
-                // Демо-режим: создаем фиктивные данные оплаты
-                const paymentData = {
-                    url: "#",
-                    ttlMinutes: 10
-                };
+                    const paymentData = await resp.json();
 
-                showPaymentModal(paymentData, amount);
-                closeModal();
+                    if (!paymentData || !paymentData.url) {
+                        throw new Error('Сервер не вернул ссылку на оплату');
+                    }
 
-                isProcessingPayment = false;
-                confirmBtn.classList.remove('processing');
-                confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Подтвердить';
+                    // Имитация небольшой задержки, чтобы анимация успела показаться
+                    await new Promise(r => setTimeout(r, 500));
+
+                    showPaymentModal(paymentData, amount);
+                    closeModal();
+                } catch (e) {
+                    console.error(e);
+                    alert('Ошибка при создании ссылки на оплату. Попробуй позже.');
+                } finally {
+                    confirmBtn.classList.remove('processing');
+                    confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Подтвердить';
+                }
             }
 
             function showPaymentModal(paymentData, amountValue) {
@@ -1838,7 +1895,12 @@
 
                 // Обработчик для кнопки оплаты
                 payButton.onclick = () => {
-                    alert('В демо-режиме оплата не производится');
+                    // Если PWA, то открываем через iOS-механику
+                    if (window.matchMedia('(display-mode: standalone)').matches) {
+                        window.location.href = paymentData.url; // открывает в Safari
+                    } else {
+                        window.open(paymentData.url, '_blank', 'noopener,noreferrer');
+                    }
                 };
 
                 // Показываем модальное окно
@@ -1962,6 +2024,10 @@
                     updateBtn.style.transform = 'rotate(0deg)';
 
                     lastUpdateTime = Date.now();
+                    if (cardsInfo[cardNumber]) {
+                        cardsInfo[cardNumber].lastUpdateTime = lastUpdateTime;
+                        saveCards();
+                    }
                     updateLastUpdateText();
 
                     renderHistory(data.tripHistory || [], 'tripsHistory', true);
