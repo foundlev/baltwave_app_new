@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+        <title>Волна Балтики</title>
+        <meta name="color-scheme" content="light dark">
+        <!-- Font Awesome (локальный путь, как у тебя) -->
+        <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+
+        <!-- Manifest -->
+        <link rel="manifest" href="/manifest.webmanifest">
+
+        <!-- Цвет статус-бара и системных UI (Android + Chrome iOS) -->
+        <meta name="theme-color" content="#141821" media="(prefers-color-scheme: dark)">
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+
+        <!-- iOS PWA full-screen -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <!-- Варианты: default / black / black-translucent. Для Dynamic Island чаще лучше translucent -->
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+        <meta name="apple-mobile-web-app-title" content="Сила × 90">
+
+        <!-- iOS иконки -->
+        <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png" sizes="180x180">
+        <link rel="apple-touch-icon" href="icons/apple-touch-icon-167.png" sizes="167x167">
+        <link rel="apple-touch-icon" href="icons/apple-touch-icon-152.png" sizes="152x152">
+        <link rel="apple-touch-icon" href="icons/apple-touch-icon-120.png" sizes="120x120">
+
+        <style>
+            :root {
+                --primary: #6366f1;
+                --secondary: #818cf8;
+                --background: #ffffff;
+                --surface: #f8fafc;
+                --text: #1e293b;
+                --text-secondary: #64748b;
+                --border: #e2e8f0;
+                --success: #22c55e;
+                --error: #ef4444;
+                --radius: 16px;
+                --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --background: #0f172a;
+                    --surface: #1e293b;
+                    --text: #f8fafc;
+                    --text-secondary: #94a3b8;
+                    --border: #334155;
+                    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                transition: var(--transition);
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            body {
+                background: var(--background);
+                color: var(--text);
+                font-family: 'Inter', system-ui, sans-serif;
+                line-height: 1.5;
+                font-size: 1rem;
+                min-height: 100vh;
+                padding: 1rem;
+                -webkit-text-size-adjust: 100%;
+            }
+
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                height: calc(100vh - 2rem);
+                gap: 1rem;
+            }
+
+            /* Header */
+            .app-header {
+                text-align: center;
+                margin-bottom: 0.25rem;
+                padding: 0.25rem 0;
+            }
+
+            .app-header.compact {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                line-height: 1;
+            }
+
+            .app-brand {
+                font-weight: 700;
+                font-size: 0.95rem;
+                color: var(--text);
+            }
+
+            .app-ver {
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+            }
+
+            .app-header .sep { opacity: 0.6; }
+
+            /* Можно ещё чутка уплотнить общий вертикальный ритм */
+            .container { gap: 0.75rem; }
+
+            /* Card Selector */
+            .card-selector {
+                position: relative;
+                margin-bottom: 0.5rem;
+            }
+
+            .card-selector-btn {
+                background: var(--surface);
+                border: 2px solid var(--border);
+                border-radius: var(--radius);
+                padding: 1rem 1.5rem;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+            .card-selector-btn:hover {
+                border-color: var(--primary);
+            }
+
+            .card-selector-btn i {
+                color: var(--text-secondary);
+                transition: transform 0.3s ease;
+            }
+
+            .card-selector-btn.open i {
+                transform: rotate(180deg);
+            }
+
+            .card-selector-dropdown {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--surface);
+                border: 2px solid var(--border);
+                border-radius: var(--radius);
+                margin-top: 0.5rem;
+                z-index: 100;
+                display: none;
+                max-height: 300px;
+                overflow-y: auto;
+                box-shadow: var(--shadow);
+            }
+
+            .card-selector-dropdown.open {
+                display: block;
+                animation: slideDown 0.3s ease;
+            }
+
+            .card-option {
+                padding: 1rem 1.5rem;
+                cursor: pointer;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .card-option:last-child {
+                border-bottom: none;
+            }
+
+            .card-option:hover {
+                background: rgba(99, 102, 241, 0.05);
+            }
+
+            .card-option.active {
+                background: rgba(99, 102, 241, 0.1);
+                color: var(--primary);
+            }
+
+            .card-info {
+                flex: 1;
+            }
+
+            .card-name {
+                font-weight: 500;
+                margin-bottom: 0.25rem;
+            }
+
+            .card-number {
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+            }
+
+            .card-actions {
+                display: flex;
+                gap: 0.5rem;
+                margin-left: 1rem;
+                align-items: center;
+            }
+
+            .delete-card-btn {
+                background: none;
+                border: none;
+                color: var(--error);
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 6px;
+                font-size: 1.1rem;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .delete-card-btn:hover {
+                background: rgba(239, 68, 68, 0.1);
+            }
+
+            .add-card-btn {
+                padding: 1rem 1.5rem;
+                color: var(--primary);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-weight: 500;
+            }
+
+            .add-card-btn:hover {
+                background: rgba(99, 102, 241, 0.05);
+            }
+
+            /* Delete Confirmation Modal */
+            .delete-confirm-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(8px);
+                z-index: 1100;
+            }
+
+            .delete-confirm-content {
+                background: var(--surface);
+                padding: 2rem;
+                border-radius: var(--radius);
+                width: 90%;
+                max-width: 400px;
+                position: relative;
+                animation: modalAppear 0.3s ease;
+                text-align: center;
+            }
+
+            .delete-confirm-text {
+                margin-bottom: 1.5rem;
+                font-size: 1.1rem;
+                line-height: 1.4;
+            }
+
+            .delete-confirm-actions {
+                display: flex;
+                gap: 1rem;
+            }
+
+            .delete-confirm-actions .btn {
+                flex: 1;
+            }
+
+            /* Card Input Modal */
+            .card-input-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+            }
+
+            .card-input-content {
+                background: var(--surface);
+                padding: 2rem;
+                border-radius: var(--radius);
+                width: 90%;
+                max-width: 400px;
+                position: relative;
+                animation: modalAppear 0.3s ease;
+            }
+
+            .card-input-field {
+                margin: 1.5rem 0;
+            }
+
+            .card-input-field label {
+                display: block;
+                margin-bottom: 0.5rem;
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+
+            .card-input-field input {
+                width: 100%;
+                padding: 1rem;
+                border: 2px solid var(--border);
+                border-radius: var(--radius);
+                background: var(--background);
+                color: var(--text);
+                font-size: 1rem;
+                -webkit-user-select: text;
+                -moz-user-select: text;
+                -ms-user-select: text;
+                user-select: text;
+            }
+
+            .card-input-field input:focus {
+                border-color: var(--primary);
+                outline: none;
+            }
+
+            .card-input-error {
+                color: var(--error);
+                font-size: 0.85rem;
+                margin-top: 0.5rem;
+                height: 1.2rem;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .card-input-error.show {
+                opacity: 1;
+            }
+
+            /* Balance Card */
+            .balance-card {
+                background: linear-gradient(135deg, #4f46e5 0%, #7c73e6 100%);
+                color: white;
+                padding: 1rem 1rem 0.9rem; /* было 1.5rem */
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+                position: relative; /* чтобы закрепить кнопку */
+                overflow: hidden;
+            }
+
+            .balance-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s;
+            }
+
+            .balance-card.loading::before {
+                left: 100%;
+            }
+
+            .balance-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 0.25rem; /* было 0.5rem */
+            }
+
+            .balance-title {
+                font-size: 0.85rem;  /* было 0.9rem */
+                opacity: 0.9;
+                line-height: 1.1;
+            }
+
+            .balance-amount-container {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem; /* было 0.5rem */
+                margin-top: 0.1rem;
+            }
+
+            #balanceAmount {
+                font-size: 2.0rem;  /* было 2rem */
+                font-weight: 800;
+                letter-spacing: -0.02em; /* было -0.03em */
+                line-height: 1.05;
+                margin: 10px 0;
+            }
+
+            .balance-loading {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid transparent;
+                border-top: 2px solid white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                font-size: 2.0rem;  /* было 2rem */
+                margin: 10px 0;
+            }
+
+            .last-update {
+                font-size: 0.72rem;   /* было 0.75rem */
+                opacity: 0.85;
+                margin-top: 0.35rem;  /* было 0.5rem */
+            }
+
+            .edit-btn {
+                position: absolute;
+                top: 0.75rem;         /* прибили к углу */
+                right: 0.75rem;
+                background: rgba(255, 255, 255, 0.18);
+                border: none;
+                color: white;
+                cursor: pointer;
+                padding: 0;
+                border-radius: 50%;
+                width: 48px;          /* было 44px */
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.1rem;    /* было 1.2rem */
+                transition: transform 0.2s ease, background 0.2s ease;
+            }
+            .edit-btn:hover {
+                background: rgba(255, 255, 255, 0.26);
+                transform: scale(1.03);
+            }
+
+            /* Tabs */
+            .tabs {
+                display: flex;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .tab {
+                flex: 1;
+                padding: 1rem;
+                border: none;
+                border-radius: var(--radius);
+                background: var(--surface);
+                color: var(--text-secondary);
+                cursor: pointer;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                font-size: 0.9rem;
+                transition: all 0.3s ease;
+            }
+
+            .tab:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .tab.active {
+                background: var(--primary);
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            /* History Items */
+            .history-list {
+                display: none;
+                flex-direction: column;
+                gap: 0.75rem;
+                flex: 1;
+                overflow-y: auto;
+            }
+
+            .history-list.active {
+                display: flex;
+            }
+
+            .day-group {
+                margin-bottom: 1.5rem;
+            }
+
+            .day-header {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--text-secondary);
+                margin-bottom: 0.75rem;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .history-item {
+                display: flex;
+                align-items: center;
+                gap: 1.1rem;
+                padding: 1.25rem;
+                background: var(--surface);
+                border-radius: 12px;
+                animation: slideIn 0.4s ease-out;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .history-item:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .history-item-icon {
+                flex-shrink: 0;
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                background: rgba(99, 102, 241, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.3rem;
+                color: var(--primary);
+                transition: all 0.3s ease;
+            }
+
+            .history-item:hover .history-item-icon {
+                transform: scale(1.1);
+            }
+
+            .history-item-content {
+                flex-grow: 1;
+                min-width: 0;
+            }
+
+            .history-item-title {
+                font-weight: 600;
+                margin-bottom: 0.25rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .history-item-details {
+                display: flex;
+                gap: 1rem;
+                color: var(--text-secondary);
+                font-size: 0.875rem;
+                flex-wrap: wrap;
+            }
+
+            .history-item-amount {
+                font-weight: 600;
+                white-space: nowrap;
+                transition: all 0.3s ease;
+            }
+
+            .history-item:hover .history-item-amount {
+                transform: scale(1.05);
+            }
+
+            .gov-number {
+                display: inline-block;
+                padding: 0.2rem 0.5rem;
+                background: rgba(0, 0, 0, 0.05);
+                border-radius: 4px;
+                font-family: monospace;
+                font-weight: bold;
+                letter-spacing: 0.5px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                font-size: 0.8rem;
+            }
+
+            /* Detail Modal */
+            .detail-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+            }
+
+            .detail-content {
+                position: relative;
+                background: var(--surface);
+                padding: 2rem;
+                border-radius: var(--radius);
+                width: 90%;
+                max-width: 400px;
+                max-height: 80vh;
+                overflow-y: auto;
+                animation: modalAppear 0.3s ease;
+            }
+
+            .detail-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .detail-icon {
+                width: 60px;
+                height: 60px;
+                border-radius: 16px;
+                background: rgba(99, 102, 241, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                color: var(--primary);
+            }
+
+            .detail-title {
+                font-size: 1.2rem;
+                font-weight: 600;
+            }
+
+            .detail-info {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .detail-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 0.75rem 0;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .detail-label {
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+
+            .detail-value {
+                font-weight: 600;
+                text-align: right;
+            }
+
+            .view-trip-btn {
+                margin-top: 1.5rem;
+                padding: 1rem;
+                background: rgba(99, 102, 241, 0.1);
+                border: 1px solid var(--primary);
+                border-radius: var(--radius);
+                color: var(--primary);
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                transition: all 0.3s ease;
+            }
+
+            .view-trip-btn:hover {
+                background: rgba(99, 102, 241, 0.2);
+                transform: translateY(-2px);
+            }
+
+            /* Buttons */
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.75rem;
+                width: 100%;
+                padding: 1.25rem 2rem;
+                border: none;
+                border-radius: var(--radius);
+                background: var(--primary);
+                color: white;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .btn:disabled {
+                background: var(--text-secondary);
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+                opacity: 0.6;
+            }
+
+            .btn.show-modal-btn {
+                margin-bottom: 0;
+                font-size: 1.0rem;
+            }
+
+            .btn.process-payment {
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .btn-secondary {
+                background: var(--surface);
+                color: var(--text);
+                border: 1px solid var(--border);
+            }
+
+            .btn-danger {
+                background: var(--error);
+                color: white;
+            }
+
+            .close-btn {
+                position: absolute;
+                top: 1rem;
+                right: 1rem;
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                color: var(--text-secondary);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .close-btn:hover {
+                color: var(--text);
+                transform: scale(1.1);
+            }
+
+            /* Modal */
+            .modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: none;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+            }
+
+            .modal-content {
+                background: var(--surface);
+                padding: 2rem;
+                border-radius: var(--radius);
+                width: 90%;
+                max-width: 400px;
+                position: relative;
+                animation: modalAppear 0.3s ease;
+            }
+
+            .amount-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }
+
+            .amount-option {
+                padding: 1rem 0.5rem;
+                border: 2px solid var(--border);
+                border-radius: 12px;
+                cursor: pointer;
+                text-align: center;
+                font-size: 0.9rem;
+                transition: all 0.3s ease;
+            }
+
+            .amount-option:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .modal-header {
+                font-size: 1.2rem;
+                margin-bottom: 1rem;
+            }
+
+            .amount-option.selected {
+                border-color: var(--primary);
+                background: rgba(99, 102, 241, 0.1);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .custom-amount-container {
+                margin: 1rem 0 0.5rem 0;
+            }
+
+            .custom-amount-input {
+                width: 100%;
+                padding: 1rem;
+                border: 2px solid var(--border);
+                border-radius: var(--radius);
+                background: var(--background);
+                color: var(--text);
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+                -webkit-user-select: text;
+                -moz-user-select: text;
+                -ms-user-select: text;
+                user-select: text;
+            }
+
+            .custom-amount-input:focus {
+                border-color: var(--primary);
+                outline: none;
+            }
+
+            .amount-hint {
+                color: var(--text-secondary);
+                font-size: 0.8rem;
+                text-align: center;
+                margin-bottom: 0.5rem;
+            }
+
+            .amount-error {
+                color: var(--error);
+                font-size: 0.9rem;
+                text-align: center;
+                height: 1.2rem;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .amount-error.show {
+                opacity: 1;
+            }
+
+            .processing {
+                position: relative;
+                pointer-events: none;
+            }
+
+            .processing::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: var(--radius);
+            }
+
+            .processing::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 20px;
+                height: 20px;
+                margin: -10px 0 0 -10px;
+                border: 2px solid transparent;
+                border-top: 2px solid var(--primary);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                z-index: 1;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateY(20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideDown {
+                from {
+                    transform: translateY(-10px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes modalAppear {
+                from {
+                    transform: scale(0.9);
+                    opacity: 0;
+                }
+                to {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            #paymentInfo {
+                text-align: center;
+                margin-bottom: 1.5rem;
+            }
+
+            #paymentInfo p {
+                margin: 0.5rem 0;
+                font-size: 1.1rem;
+            }
+
+            #paymentTimer {
+                font-weight: 600;
+                color: var(--primary);
+            }
+
+            @media (max-width: 360px) {
+                #balanceAmount { font-size: 1.6rem; }
+                .edit-btn { width: 48px; height: 48px; top: 0.6rem; right: 0.6rem; }
+                .balance-card { padding: 0.9rem 0.9rem 0.8rem; }
+            }
+
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="app-header compact">
+                <span class="app-brand">Карта Волна Балтики</span>
+                <span class="sep">·</span>
+                <span class="app-ver">v1.0.0</span>
+            </div>
+
+            <div class="card-selector">
+                <div class="card-selector-btn" id="cardSelectorBtn">
+                    <span id="selectedCardName">Выберите карту</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="card-selector-dropdown" id="cardSelectorDropdown">
+                    <!-- Карты будут здесь -->
+                </div>
+            </div>
+
+            <div class="balance-card" id="balanceCard">
+                <div class="balance-header">
+                    <div class="balance-title">Текущий баланс</div>
+                    <button class="edit-btn" id="updateBalanceBtn">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="balance-amount-container">
+                    <div id="balanceAmount">–</div>
+                    <div class="balance-loading" id="balanceLoading" style="display: none;"></div>
+                </div>
+                <div class="last-update" id="lastUpdate">Обновлено только что</div>
+            </div>
+
+            <button class="btn show-modal-btn" onclick="showTopUpModal()">
+                <i class="fas fa-plus-circle"></i>
+                Пополнить баланс
+            </button>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="trips" onclick="switchTab('trips')">
+                    <i class="fas fa-bus"></i>
+                    Поездки
+                </button>
+                <button class="tab" data-tab="operations" onclick="switchTab('operations')">
+                    <i class="fas fa-exchange-alt"></i>
+                    Операции
+                </button>
+            </div>
+
+            <div class="history-list active" id="tripsHistory">
+                <!-- Поездки будут здесь -->
+            </div>
+
+            <div class="history-list" id="operationsHistory">
+                <!-- Операции будут здесь -->
+            </div>
+        </div>
+
+        <div class="modal" id="topUpModal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-header">Пополнение баланса</h2>
+                <div class="amount-grid">
+                    <div class="amount-option" data-amount="10000" onclick="selectAmount(10000)">100 ₽</div>
+                    <div class="amount-option" data-amount="20000" onclick="selectAmount(20000)">200 ₽</div>
+                    <div class="amount-option" data-amount="50000" onclick="selectAmount(50000)">500 ₽</div>
+                    <div class="amount-option" data-amount="80000" onclick="selectAmount(80000)">800 ₽</div>
+                    <div class="amount-option" data-amount="100000" onclick="selectAmount(100000)">1000 ₽</div>
+                    <div class="amount-option" data-amount="150000" onclick="selectAmount(150000)">1500 ₽</div>
+                </div>
+                <div class="custom-amount-container">
+                    <input type="number"
+                           id="customAmount"
+                           inputmode="numeric"
+                           pattern="\d*"
+                           placeholder="Введите сумму от 50 до 5000 ₽"
+                           min="50"
+                           max="5000"
+                           step="50"
+                           class="custom-amount-input"
+                           oninput="validateAmount()">
+                    <div class="amount-hint">Укажите сумму от 50 до 5000 рублей</div>
+                    <div class="amount-error" id="amountError" style="display: none;"></div>
+                </div>
+                <button class="btn process-payment" id="confirmBtn" onclick="processPayment()" style="margin-top: 15px;">
+                    <i class="fas fa-check-circle"></i>
+                    Подтвердить
+                </button>
+            </div>
+        </div>
+
+        <div class="modal" id="paymentModal">
+            <div class="modal-content">
+                <button class="close-btn" onclick="closePaymentModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 style=" text-align: center; margin-bottom: 1.5rem;">Оплата</h2>
+                <div id="paymentInfo">
+                    <p>Сумма: <span id="paymentAmount"></span></p>
+                    <p>Время на оплату: <span id="paymentTimer">10:00</span></p>
+                </div>
+                <button class="btn" id="payButton">
+                    <i class="fas fa-external-link-alt"></i>
+                    Перейти к оплате
+                </button>
+                <button class="btn btn-secondary" id="paidButton" onclick="refreshAfterPayment()" style=" margin-top: 10px;">
+                    <i class="fas fa-check"></i>
+                    Я оплатил
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-modal" id="detailModal">
+            <div class="detail-content">
+                <!-- Детальная информация будет здесь -->
+            </div>
+        </div>
+
+        <div class="card-input-modal" id="cardInputModal">
+            <div class="card-input-content">
+                <button class="close-btn" onclick="closeCardInputModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-header">Добавить карту</h2>
+                <div class="card-input-field">
+                    <label for="newCardName">Название карты *</label>
+                    <input type="text" id="newCardName" placeholder="Например: Моя основная карта" oninput="validateCardInput()">
+                    <div class="card-input-error" id="nameError"></div>
+                </div>
+                <div class="card-input-field">
+                    <label for="newCardNumber">Номер карты *</label>
+                    <input type="text" id="newCardNumber" placeholder="Введите 12-значный номер карты" oninput="validateCardInput()">
+                    <div class="card-input-error" id="numberError"></div>
+                </div>
+                <button class="btn" id="addCardBtn" onclick="addNewCard()" disabled>
+                    <i class="fas fa-plus"></i>
+                    Добавить карту
+                </button>
+            </div>
+        </div>
+
+        <div class="delete-confirm-modal" id="deleteConfirmModal">
+            <div class="delete-confirm-content">
+                <h2 style="margin-bottom: 1rem;">Удаление карты</h2>
+                <div class="delete-confirm-text" id="deleteConfirmText">
+                    Вы действительно хотите удалить карту?
+                </div>
+                <div class="delete-confirm-actions">
+                    <button class="btn btn-secondary" onclick="closeDeleteConfirmModal()">
+                        Отмена
+                    </button>
+                    <button class="btn btn-danger" id="confirmDeleteBtn">
+                        Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Адрес твоего PHP-прокси
+            const PHP_BASE = 'https://myapihelper.na4u.ru/baltwave/volna_proxy.php';
+
+            // Локальное хранилище карт (ранее было cardsInfo)
+            let cardsInfo = {};
+
+            // При первой загрузке восстанавливаем карты из localStorage
+            const stored = localStorage.getItem('transportCards');
+            if (stored) {
+                try {
+                    cardsInfo = JSON.parse(stored);
+                } catch (e) {
+                    cardsInfo = {};
+                }
+            }
+
+            let selectedAmount = null;
+            let currentTab = 'trips';
+            let lastUpdateTime = null;
+            let currentPaymentTimer = null;
+            let currentCardNumber = null;
+            let isProcessingPayment = false;
+            let cardToDelete = null;
+
+            // Инициализация
+            function init() {
+                loadCards();
+                renderCardSelector();
+
+                // Устанавливаем время последнего обновления
+                lastUpdateTime = Date.now();
+                updateLastUpdateText();
+
+                // Загружаем данные для выбранной карты
+                const savedCard = getCurrentCard();
+                if (savedCard && cardsInfo[savedCard]) {
+                    selectCard(savedCard);
+                } else if (Object.keys(cardsInfo).length > 0) {
+                    // Выбираем первую карту по умолчанию
+                    const firstCard = Object.keys(cardsInfo)[0];
+                    selectCard(firstCard);
+                }
+
+                // Добавляем обработчик для кнопки обновления баланса
+                const updateBalanceBtn = document.getElementById('updateBalanceBtn');
+                if (updateBalanceBtn) {
+                    updateBalanceBtn.addEventListener('click', async () => {
+                        await refreshBalance(true);
+                    });
+                }
+            }
+
+            // Загрузка и сохранение карт
+            function loadCards() {
+                const savedCards = localStorage.getItem('transportCards');
+                if (savedCards) {
+                    const cards = JSON.parse(savedCards);
+                    Object.keys(cards).forEach(cardNumber => {
+                        if (!cardsInfo[cardNumber]) {
+                            cardsInfo[cardNumber] = cards[cardNumber];
+                        }
+                    });
+                }
+
+                // Сохраняем текущие карты
+                saveCards();
+            }
+
+            function saveCards() {
+                localStorage.setItem('transportCards', JSON.stringify(cardsInfo));
+            }
+
+            function getCurrentCard() {
+                return localStorage.getItem('currentCard');
+            }
+
+            function setCurrentCard(cardNumber) {
+                localStorage.setItem('currentCard', cardNumber);
+                currentCardNumber = cardNumber;
+            }
+
+            // Управление селектором карт
+            function renderCardSelector() {
+                const dropdown = document.getElementById('cardSelectorDropdown');
+                dropdown.innerHTML = '';
+
+                Object.keys(cardsInfo).forEach(cardNumber => {
+                    const card = cardsInfo[cardNumber];
+                    const cardOption = document.createElement('div');
+                    cardOption.className = `card-option ${currentCardNumber === cardNumber ? 'active' : ''}`;
+
+                    cardOption.innerHTML = `
+                        <div class="card-info">
+                            <div class="card-name">${card.cardName}</div>
+                            <div class="card-number">${card.cardNumber}</div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="delete-card-btn" onclick="event.stopPropagation(); showDeleteConfirm('${cardNumber}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            ${currentCardNumber === cardNumber ? '<i class="fas fa-check"></i>' : ''}
+                        </div>
+                    `;
+
+                    cardOption.onclick = () => selectCard(cardNumber);
+                    dropdown.appendChild(cardOption);
+                });
+
+                // Кнопка добавления новой карты
+                const addCardBtn = document.createElement('div');
+                addCardBtn.className = 'add-card-btn';
+                addCardBtn.onclick = showCardInputModal;
+                addCardBtn.innerHTML = '<i class="fas fa-plus"></i> Добавить карту';
+                dropdown.appendChild(addCardBtn);
+            }
+
+            function selectCard(cardNumber) {
+                if (!cardsInfo[cardNumber]) return;
+
+                currentCardNumber = cardNumber;
+                setCurrentCard(cardNumber);
+
+                // Обновляем отображение выбранной карты
+                document.getElementById('selectedCardName').textContent = cardsInfo[cardNumber].cardName;
+
+                // Закрываем dropdown
+                toggleCardSelector(false);
+
+                // Показываем сохранённые данные из localStorage, если есть
+                const savedCardData = cardsInfo[cardNumber];
+                if (savedCardData) {
+                    document.getElementById('balanceAmount').textContent =
+                        (savedCardData.balanceAmountCent / 100).toFixed(2) + ' ₽';
+                                    renderHistory(savedCardData.tripHistory || [], 'tripsHistory', true);
+
+                                    const operations = [...(savedCardData.orderHistory || [])];
+                                    (savedCardData.tripHistory || []).forEach(t => {
+                                        operations.push({
+                                            orderId: t.ticketOrderId,
+                                            amountCent: -t.totalAmountCent,
+                                            datePurchase: t.dateTrip,
+                                            datePurchaseString: t.dateTripString,
+                                            orderTypeFriendlyName: "Оплата поездки",
+                                            fp: null
+                                        });
+                                    });
+                                    operations.sort((a, b) => new Date(b.datePurchase) - new Date(a.datePurchase));
+                                    renderHistory(operations, 'operationsHistory', false);
+                                }
+
+                // Обновляем список карт
+                renderCardSelector();
+            }
+
+            function showDeleteConfirm(cardNumber) {
+                cardToDelete = cardNumber;
+                const card = cardsInfo[cardNumber];
+                document.getElementById('deleteConfirmText').textContent = `Вы действительно хотите удалить карту "${card.cardName}"?`;
+                document.getElementById('deleteConfirmModal').style.display = 'flex';
+            }
+
+            function closeDeleteConfirmModal() {
+                document.getElementById('deleteConfirmModal').style.display = 'none';
+                cardToDelete = null;
+            }
+
+            function deleteCard() {
+                if (!cardToDelete) return;
+
+                if (Object.keys(cardsInfo).length <= 1) {
+                    alert('Нельзя удалить последнюю карту');
+                    closeDeleteConfirmModal();
+                    return;
+                }
+
+                delete cardsInfo[cardToDelete];
+                saveCards();
+
+                // Если удалили текущую карту, выбираем другую
+                if (currentCardNumber === cardToDelete) {
+                    const remainingCards = Object.keys(cardsInfo);
+                    if (remainingCards.length > 0) {
+                        selectCard(remainingCards[0]);
+                    } else {
+                        currentCardNumber = null;
+                        document.getElementById('selectedCardName').textContent = 'Выберите карту';
+                        document.getElementById('balanceAmount').textContent = '–';
+                        document.getElementById('tripsHistory').innerHTML = '';
+                        document.getElementById('operationsHistory').innerHTML = '';
+                    }
+                }
+
+                renderCardSelector();
+                closeDeleteConfirmModal();
+            }
+
+            function toggleCardSelector(open) {
+                const btn = document.getElementById('cardSelectorBtn');
+                const dropdown = document.getElementById('cardSelectorDropdown');
+
+                if (open) {
+                    btn.classList.add('open');
+                    dropdown.classList.add('open');
+                } else {
+                    btn.classList.remove('open');
+                    dropdown.classList.remove('open');
+                }
+            }
+
+            function showCardInputModal() {
+                document.getElementById('cardInputModal').style.display = 'flex';
+                toggleCardSelector(false);
+                validateCardInput(); // Проверяем при открытии
+            }
+
+            function closeCardInputModal() {
+                document.getElementById('cardInputModal').style.display = 'none';
+                document.getElementById('newCardName').value = '';
+                document.getElementById('newCardNumber').value = '';
+                document.getElementById('nameError').textContent = '';
+                document.getElementById('numberError').textContent = '';
+                document.getElementById('addCardBtn').disabled = true;
+            }
+
+            function validateCardInput() {
+                const cardName = document.getElementById('newCardName').value.trim();
+                const cardNumber = document.getElementById('newCardNumber').value.trim();
+                const nameError = document.getElementById('nameError');
+                const numberError = document.getElementById('numberError');
+                const addCardBtn = document.getElementById('addCardBtn');
+
+                let isValid = true;
+
+                // Проверка названия карты
+                if (!cardName) {
+                    nameError.textContent = 'Введите название карты';
+                    nameError.classList.add('show');
+                    isValid = false;
+                } else {
+                    nameError.textContent = '';
+                    nameError.classList.remove('show');
+                }
+
+                // Проверка номера карты
+                if (!cardNumber) {
+                    numberError.textContent = 'Введите номер карты';
+                    numberError.classList.add('show');
+                    isValid = false;
+                } else if (!/^\d+$/.test(cardNumber)) {
+                    numberError.textContent = 'Номер карты должен содержать только цифры';
+                    numberError.classList.add('show');
+                    isValid = false;
+                } else if (cardNumber.length !== 12) {
+                    numberError.textContent = 'Номер карты должен содержать 12 цифр';
+                    numberError.classList.add('show');
+                    isValid = false;
+                } else if (cardsInfo[cardNumber]) {
+                    numberError.textContent = 'Карта с таким номером уже существует';
+                    numberError.classList.add('show');
+                    isValid = false;
+                } else {
+                    numberError.textContent = '';
+                    numberError.classList.remove('show');
+                }
+
+                addCardBtn.disabled = !isValid;
+                return isValid;
+            }
+
+            function addNewCard() {
+                if (!validateCardInput()) return;
+
+                const cardName = document.getElementById('newCardName').value.trim();
+                const cardNumber = document.getElementById('newCardNumber').value.trim();
+
+                // Создаем новую карту с базовыми данными
+                cardsInfo[cardNumber] = {
+                    cardId: Date.now(),
+                    cardNumber: cardNumber,
+                    cardName: cardName,
+                    balanceAmountCent: 0,
+                    orderHistory: [],
+                    tripHistory: [],
+                    dateExpire: "2025-12-31"
+                };
+
+                saveCards();
+                closeCardInputModal();
+                renderCardSelector();
+                selectCard(cardNumber);
+            }
+
+            // Переключение вкладок
+            function switchTab(tab) {
+                if (tab === currentTab) return;
+
+                document.querySelectorAll('.tab').forEach(t =>
+                    t.classList.remove('active'));
+                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+                document.querySelectorAll('.history-list').forEach(list =>
+                    list.classList.remove('active'));
+                document.getElementById(`${tab}History`).classList.add('active');
+
+                currentTab = tab;
+            }
+
+            // Обновление баланса
+            async function refreshBalance(force = false) {
+                if (!currentCardNumber) return;
+                await fetchCardData(currentCardNumber, force);
+            }
+
+            function formatDate(isoString) {
+                const date = new Date(isoString);
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${hours}:${minutes}`;
+            }
+
+            function formatDateForGroup(isoString) {
+                const date = new Date(isoString);
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+
+                const daysOfWeek = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+                const dayOfWeek = daysOfWeek[date.getDay()];
+
+                if (date.toDateString() === today.toDateString()) {
+                    return `Сегодня, ${day}.${month}.${year}`;
+                } else if (date.toDateString() === yesterday.toDateString()) {
+                    return `Вчера, ${day}.${month}.${year}`;
+                } else {
+                    return `${dayOfWeek}, ${day}.${month}.${year}`;
+                }
+            }
+
+            // Форматирование госномера
+            function formatGovNumber(govNumber) {
+                if (!govNumber) return '';
+
+                // Убираем информацию в скобках
+                const cleanNumber = govNumber.replace(/\s*\([^)]*\)/g, '');
+
+                // Разделяем номер на части для лучшего отображения
+                // Формат: буквы цифры буквы цифры (например: А123БВ45)
+                const match = cleanNumber.match(/^([а-яa-z]+)(\d+)([а-яa-z]+)(\d+)$/i);
+
+                if (match) {
+                    const [, letters1, digits1, letters2, digits2] = match;
+                    return `${letters1.toUpperCase()}${digits1}${letters2.toUpperCase()} ${digits2}`;
+                }
+
+                return cleanNumber.toUpperCase();
+            }
+
+            // Обновление текста последнего обновления
+            function updateLastUpdateText() {
+                if (!lastUpdateTime) return;
+
+                const now = Date.now();
+                const diffMs = now - lastUpdateTime;
+                const diffSec = Math.floor(diffMs / 1000);
+                const diffMin = Math.floor(diffSec / 60);
+                const diffHours = Math.floor(diffMin / 60);
+                const diffDays = Math.floor(diffHours / 24);
+
+                let text = 'Обновлено ';
+
+                if (diffSec < 60) {
+                    text += 'только что';
+                } else if (diffMin < 60) {
+                    text += `${diffMin} ${getNoun(diffMin, 'минуту', 'минуты', 'минут')} назад`;
+                } else if (diffHours < 24) {
+                    text += `${diffHours} ${getNoun(diffHours, 'час', 'часа', 'часов')} назад`;
+                } else if (diffDays < 7) {
+                    text += `${diffDays} ${getNoun(diffDays, 'день', 'дня', 'дней')} назад`;
+                } else {
+                    text += 'больше недели назад';
+                }
+
+                document.getElementById('lastUpdate').textContent = text;
+            }
+
+            // Функция для склонения существительных
+            function getNoun(number, one, two, five) {
+                let n = Math.abs(number);
+                n %= 100;
+                if (n >= 5 && n <= 20) {
+                    return five;
+                }
+                n %= 10;
+                if (n === 1) {
+                    return one;
+                }
+                if (n >= 2 && n <= 4) {
+                    return two;
+                }
+                return five;
+            }
+
+            // Группировка по дням
+            function groupByDay(items, dateField) {
+                const groups = {};
+
+                items.forEach(item => {
+                    const date = new Date(item[dateField]);
+                    const dateKey = date.toDateString();
+
+                    if (!groups[dateKey]) {
+                        groups[dateKey] = {
+                            date: date,
+                            items: []
+                        };
+                    }
+
+                    groups[dateKey].items.push(item);
+                });
+
+                return groups;
+            }
+
+            // История
+            function renderHistory(items, containerId, isTrip) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+
+                if (!items.length) {
+                    container.innerHTML = '<div class="history-item">Нет данных</div>';
+                    return;
+                }
+
+                const dateField = isTrip ? 'dateTrip' : 'datePurchase';
+                const groups = groupByDay(items, dateField);
+
+                // Сортируем группы по дате (от новых к старым)
+                const sortedGroups = Object.values(groups).sort((a, b) => b.date - a.date);
+
+                sortedGroups.forEach(group => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'day-header';
+                    dayHeader.textContent = formatDateForGroup(group.date);
+                    container.appendChild(dayHeader);
+
+                    // Сортируем элементы внутри группы по времени (от новых к старым)
+                    group.items.sort((a, b) => new Date(b[dateField]) - new Date(a[dateField]));
+
+                    group.items.forEach(item => {
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'history-item';
+                        historyItem.onclick = () => showDetailModal(item, isTrip);
+
+                        // Определяем иконку в зависимости от типа операции
+                        let iconClass = 'fa-exchange-alt';
+                        if (isTrip) {
+                            iconClass = 'fa-bus';
+                        } else if (item.amountCent > 0) {
+                            iconClass = 'fa-plus';
+                        } else if (item.orderTypeFriendlyName === 'Оплата поездки') {
+                            iconClass = 'fa-ticket-alt';
+                        }
+
+                        historyItem.innerHTML = `
+                            <div class="history-item-icon">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <div class="history-item-content">
+                                <div class="history-item-title">
+                                    ${isTrip ? item.vehicleTypeName + ' ' + item.routeNumber : item.orderTypeFriendlyName}
+                                </div>
+                                <div class="history-item-details">
+                                    <span>${formatDate(item[dateField])}</span>
+                                </div>
+                            </div>
+                            <div class="history-item-amount" style="color: ${isTrip || item.amountCent < 0 ? 'var(--text)' : 'var(--success)'}">
+                                ${isTrip || item.amountCent < 0 ? '-' : '+'}${((item.totalAmountCent || Math.abs(item.amountCent)) / 100).toFixed(0)} ₽
+                            </div>
+                        `;
+
+                        container.appendChild(historyItem);
+                    });
+                });
+            }
+
+            // Детальная информация
+            function showDetailModal(item, isTrip) {
+                const modal = document.getElementById('detailModal');
+                const content = document.querySelector('.detail-content');
+
+                if (isTrip) {
+                    content.innerHTML = `
+                        <div class="detail-header">
+                            <div class="detail-icon">
+                                <i class="fas fa-bus"></i>
+                            </div>
+                            <div class="detail-title">Поездка</div>
+                        </div>
+                        <div class="detail-info">
+                            <div class="detail-row">
+                                <span class="detail-label">Маршрут:</span>
+                                <span class="detail-value">${item.routeNumber} - ${item.routeName}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Тип транспорта:</span>
+                                <span class="detail-value">${item.vehicleTypeName}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Госномер:</span>
+                                <span class="detail-value gov-number">${formatGovNumber(item.vehicleGovNumber)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Перевозчик:</span>
+                                <span class="detail-value">${item.carrierName}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Количество билетов:</span>
+                                <span class="detail-value">${item.ticketsCount}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Стоимость:</span>
+                                <span class="detail-value">-${(item.totalAmountCent / 100).toFixed(0)} ₽</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Дата:</span>
+                                <span class="detail-value">${formatDateForGroup(item.dateTrip)} ${formatDate(item.dateTrip)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Номер билета:</span>
+                                <span class="detail-value">${item.ticketNumber}</span>
+                            </div>
+                        </div>
+                    `;
+                    content.insertAdjacentHTML('afterbegin', `
+                        <button class="close-btn" onclick="closeDetailModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `);
+                } else {
+                    const isReplenishment = item.amountCent > 0;
+                    const isTripPayment = item.orderTypeFriendlyName === 'Оплата поездки';
+
+                    content.innerHTML = `
+                        <div class="detail-header">
+                            <div class="detail-icon">
+                                <i class="fas ${isReplenishment ? 'fa-plus' : (isTripPayment ? 'fa-ticket-alt' : 'fa-minus')}"></i>
+                            </div>
+                            <div class="detail-title">${item.orderTypeFriendlyName}</div>
+                        </div>
+                        <div class="detail-info">
+                            <div class="detail-row">
+                                <span class="detail-label">Тип операции:</span>
+                                <span class="detail-value">${item.orderTypeFriendlyName}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Сумма:</span>
+                                <span class="detail-value" style="color: ${isReplenishment ? 'var(--success)' : 'var(--text)'}">
+                                    ${isReplenishment ? '+' : '-'}${(Math.abs(item.amountCent) / 100).toFixed(0)} ₽
+                                </span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Дата:</span>
+                                <span class="detail-value">${formatDateForGroup(item.datePurchase)} ${formatDate(item.datePurchase)}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">ID операции:</span>
+                                <span class="detail-value">${item.orderId}</span>
+                            </div>
+                            ${item.fp ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Фискальный признак:</span>
+                                <span class="detail-value">${item.fp}</span>
+                            </div>
+                            ` : ''}
+                            ${isTripPayment ? `
+                            <button class="view-trip-btn" onclick="showTripDetails('${item.orderId}')">
+                                <i class="fas fa-bus"></i>
+                                Посмотреть информацию о поездке
+                            </button>
+                            ` : ''}
+                        </div>
+                    `;
+                    content.insertAdjacentHTML('afterbegin', `
+                        <button class="close-btn" onclick="closeDetailModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `);
+                }
+
+                modal.style.display = 'flex';
+                document.addEventListener('keydown', handleDetailEsc);
+
+                // Закрытие модального окна при клике вне его
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                };
+            }
+
+            function closeDetailModal() {
+                const modal = document.getElementById('detailModal');
+                modal.style.display = 'none';
+                // снимаем обработчик Esc, если он навешан
+                document.removeEventListener('keydown', handleDetailEsc);
+            }
+
+            function handleDetailEsc(e) {
+                if (e.key === 'Escape') closeDetailModal();
+            }
+
+            // Показать детали поездки из операции
+            function showTripDetails(orderId) {
+                if (!currentCardNumber) return;
+
+                // Находим поездку по orderId
+                const trip = cardsInfo[currentCardNumber].tripHistory.find(t => t.ticketOrderId === orderId);
+                if (trip) {
+                    showDetailModal(trip, true);
+                }
+            }
+
+            // Модальное окно пополнения баланса
+            function showTopUpModal() {
+                if (!currentCardNumber) {
+                    alert('Сначала выберите карту');
+                    return;
+                }
+
+                document.getElementById('topUpModal').style.display = 'flex';
+                validateAmount(); // Проверяем валидность суммы при открытии
+            }
+
+            function validateAmount() {
+                // Если пользователь начал ввод вручную — сбрасываем выбранный пресет
+                selectedAmount = null;
+
+                const customAmount = document.getElementById('customAmount');
+                const amountError = document.getElementById('amountError');
+                const confirmBtn = document.getElementById('confirmBtn');
+
+                const amount = selectedAmount || (customAmount.value ? customAmount.value * 100 : 0);
+                const amountRub = amount / 100;
+
+                if (!amountRub || amountRub < 50 || amountRub > 5000 || !Number.isInteger(amountRub)) {
+                    amountError.textContent = 'Сумма должна быть целым числом от 50 до 5000 рублей';
+                    amountError.classList.add('show');
+                    confirmBtn.disabled = true;
+                } else {
+                    amountError.textContent = '';
+                    amountError.classList.remove('show');
+                    confirmBtn.disabled = false;
+                }
+            }
+
+            async function processPayment() {
+                if (isProcessingPayment) return;
+
+                const amount = selectedAmount || document.getElementById('customAmount').value * 100;
+                if (!amount || amount < 5000 || amount > 500000) {
+                    alert('Сумма должна быть от 50 до 5000 рублей!');
+                    return;
+                }
+
+                isProcessingPayment = true;
+                const confirmBtn = document.getElementById('confirmBtn');
+                confirmBtn.classList.add('processing');
+                confirmBtn.innerHTML = 'Получение ссылки...';
+
+                // Имитируем задержку получения ссылки
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Демо-режим: создаем фиктивные данные оплаты
+                const paymentData = {
+                    url: "#",
+                    ttlMinutes: 10
+                };
+
+                showPaymentModal(paymentData, amount);
+                closeModal();
+
+                isProcessingPayment = false;
+                confirmBtn.classList.remove('processing');
+                confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Подтвердить';
+            }
+
+            function showPaymentModal(paymentData, amountValue) {
+                const modal = document.getElementById('paymentModal');
+                const payButton = document.getElementById('payButton');
+                const timerElement = document.getElementById('paymentTimer');
+
+                // Устанавливаем данные оплаты
+                document.getElementById('paymentAmount').textContent = `${Math.floor(amountValue / 100)} ₽`;
+
+                // Таймер обратного отсчета
+                let timeLeft = paymentData.ttlMinutes * 60;
+
+                // Очищаем предыдущий таймер, если он был
+                if (currentPaymentTimer) {
+                    clearInterval(currentPaymentTimer);
+                }
+
+                currentPaymentTimer = setInterval(() => {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(currentPaymentTimer);
+                        modal.style.display = 'none';
+                    }
+                }, 1000);
+
+                // Обработчик для кнопки оплаты
+                payButton.onclick = () => {
+                    alert('В демо-режиме оплата не производится');
+                };
+
+                // Показываем модальное окно
+                modal.style.display = 'flex';
+            }
+
+            function closeModal() {
+                document.getElementById('topUpModal').style.display = 'none';
+                selectedAmount = null;
+                document.getElementById('customAmount').value = '';
+                document.querySelectorAll('.amount-option').forEach(opt =>
+                    opt.classList.remove('selected'));
+            }
+
+            function closePaymentModal() {
+                document.getElementById('paymentModal').style.display = 'none';
+                if (currentPaymentTimer) {
+                    clearInterval(currentPaymentTimer);
+                    currentPaymentTimer = null;
+                }
+            }
+
+            function refreshAfterPayment() {
+                closePaymentModal();
+                refreshBalance(true);
+            }
+
+            function selectAmount(amount) {
+                const customAmount = document.getElementById('customAmount');
+                selectedAmount = amount;
+                customAmount.value = amount / 100;
+
+                document.querySelectorAll('.amount-option').forEach((opt) =>
+                    opt.classList.toggle('selected', opt.dataset.amount === amount)
+                );
+
+                validateAmount();
+            }
+
+            async function solvePowInBrowser(salt, challenge, maxnumber = 100000) {
+                const encoder = new TextEncoder();
+                const saltEnc = encoder.encode(salt);
+                const STEP = 250;
+                let n = 0;
+                const t0 = performance.now();
+                while (n <= maxnumber) {
+                    const end = Math.min(n + STEP, maxnumber);
+                    for (; n < end; n++) {
+                        const numEnc = encoder.encode(String(n));
+                        const concat = new Uint8Array(saltEnc.length + numEnc.length);
+                        concat.set(saltEnc, 0);
+                        concat.set(numEnc, saltEnc.length);
+                        const hashBuf = await crypto.subtle.digest('SHA-256', concat);
+                        const hashArr = Array.from(new Uint8Array(hashBuf));
+                        const hex = hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+                        if (hex === challenge) {
+                            const took = Math.round(performance.now() - t0);
+                            return { number: n, took };
+                        }
+                    }
+                    await new Promise(r => setTimeout(r, 0));
+                }
+                return null;
+            }
+
+            async function fetchCardData(cardNumber, force = false) {
+                if (!cardNumber) return;
+
+                const balanceCard = document.getElementById('balanceCard');
+                const balanceElement = document.getElementById('balanceAmount');
+                const balanceLoading = document.getElementById('balanceLoading');
+                const updateBtn = document.getElementById('updateBalanceBtn');
+
+                balanceCard.classList.add('loading');
+                balanceElement.style.display = 'none';
+                balanceLoading.style.display = 'block';
+                updateBtn.style.transform = 'rotate(360deg)';
+
+                try {
+                    // 1. Получаем challenge
+                    const challengeResp = await fetch(`${PHP_BASE}?action=challenge`);
+                    const challengeJson = await challengeResp.json();
+                    if (!challengeJson.success) throw new Error('Ошибка challenge');
+
+                    const { algorithm, challenge, salt, signature, maxnumber } = challengeJson.data;
+
+                    // 2. Решаем PoW прямо в браузере
+                    const result = await solvePowInBrowser(salt, challenge, maxnumber || 100000);
+                    if (!result) throw new Error('Не найдено решение PoW');
+
+                    // 3. Формируем токен
+                    const token = btoa(JSON.stringify({
+                        algorithm,
+                        challenge,
+                        number: result.number,
+                        salt,
+                        signature,
+                        took: result.took
+                    }));
+
+                    // 4. Отправляем запрос на PHP-прокси
+                    const checkResp = await fetch(`${PHP_BASE}?action=check`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            cardNumber: cardNumber,
+                            captchaToken: token
+                        })
+                    });
+
+                    const json = await checkResp.json();
+                    if (!json.success || !json.data) throw new Error('Ошибка получения данных карты');
+
+                    const data = json.data;
+
+                    // === Отображаем реальные данные ===
+                    balanceElement.textContent = (data.balanceAmountCent / 100).toFixed(2) + ' ₽';
+                    balanceElement.style.display = 'block';
+                    balanceLoading.style.display = 'none';
+                    balanceCard.classList.remove('loading');
+                    updateBtn.style.transform = 'rotate(0deg)';
+
+                    lastUpdateTime = Date.now();
+                    updateLastUpdateText();
+
+                    renderHistory(data.tripHistory || [], 'tripsHistory', true);
+
+                    // объединяем orderHistory + поездки в общие операции
+                    const operations = [...(data.orderHistory || [])];
+                    (data.tripHistory || []).forEach(t => {
+                        operations.push({
+                            orderId: t.ticketOrderId,
+                            amountCent: -t.totalAmountCent,
+                            datePurchase: t.dateTrip,
+                            datePurchaseString: t.dateTripString,
+                            orderTypeFriendlyName: "Оплата поездки",
+                            fp: null
+                        });
+                    });
+                    operations.sort((a,b)=>new Date(b.datePurchase)-new Date(a.datePurchase));
+                    renderHistory(operations, 'operationsHistory', false);
+
+                    // === Сохраняем полученные данные в localStorage ===
+                    cardsInfo[cardNumber] = {
+                        ...cardsInfo[cardNumber],
+                        ...data
+                    };
+                    saveCards();
+
+                } catch (e) {
+                    console.error(e);
+                    balanceElement.textContent = 'Ошибка';
+                    balanceLoading.style.display = 'none';
+                    balanceCard.classList.remove('loading');
+                    updateBtn.style.transform = 'rotate(0deg)';
+                    alert('Ошибка при получении данных карты');
+                }
+            }
+
+            // Обработчики событий
+            document.getElementById('cardSelectorBtn').addEventListener('click', () => {
+                const isOpen = document.getElementById('cardSelectorBtn').classList.contains('open');
+                toggleCardSelector(!isOpen);
+            });
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', deleteCard);
+
+            // Закрытие dropdown при клике вне его
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('cardSelectorDropdown');
+                const btn = document.getElementById('cardSelectorBtn');
+
+                if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                    toggleCardSelector(false);
+                }
+            });
+
+            // Обновляем текст времени последнего обновления каждую минуту
+            setInterval(updateLastUpdateText, 60000);
+
+            // Запуск приложения
+            init();
+        </script>
+    </body>
+</html>
